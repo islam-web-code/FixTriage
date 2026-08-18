@@ -42,3 +42,5 @@ Runs on http://localhost:5173.
 ## Team
 
 - Islam
+- Abdalmajed
+- Mustafa
