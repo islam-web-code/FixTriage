@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Home() {
   const [user, setUser] = useState(null);
@@ -30,16 +30,40 @@ function Home() {
     navigate('/login');
   };
 
-  if (!user) return <p style={{ textAlign: 'center', marginTop: 40 }}>Loading...</p>;
+  if (!user) return <p className="muted" style={{ textAlign: 'center', marginTop: 60 }}>Loading...</p>;
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto' }}>
-      <h1>FixTriage</h1>
-      <p>
-        Logged in as <strong>{user.email}</strong> (role: {user.role})
+    <div className="page">
+      <h1>
+        Hi, {user.email.split('@')[0]} 👋
+      </h1>
+      <p className="muted">
+        Signed in as <strong>{user.email}</strong>
+        <span className="badge" style={{ marginLeft: 8 }}>{user.role}</span>
       </p>
-      <button onClick={handleLogout} style={{ padding: '8px 20px' }}>
-        Logout
+
+            <div className="card">
+        <div className="stack">
+          <h2>Need something fixed?</h2>
+          <p className="muted">Browse nearby providers by category and view their services.</p>
+          <div>
+            <Link to="/providers" className="btn btn-primary">Browse providers</Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="stack">
+          <h2>Offer your skills</h2>
+          <p className="muted">Create a provider profile and list the services you offer.</p>
+          <div>
+            <Link to="/dashboard" className="btn btn-primary">Go to dashboard</Link>
+          </div>
+        </div>
+      </div>
+
+      <button className="btn btn-danger" onClick={handleLogout} style={{ marginTop: 10 }}>
+        Log out
       </button>
     </div>
   );
