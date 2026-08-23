@@ -29,35 +29,38 @@ function Register() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '40px auto' }}>
-      <h1>Register</h1>
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={{ display: 'block', width: '100%', marginBottom: 10, padding: 8 }}
-      />
-      <input
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ display: 'block', width: '100%', marginBottom: 10, padding: 8 }}
-      />
-      <input
-        placeholder="Password (min 8 characters)"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ display: 'block', width: '100%', marginBottom: 10, padding: 8 }}
-      />
-      <button onClick={handleSubmit} style={{ padding: '8px 20px' }}>
-        Register
-      </button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+    <div className="page page-narrow">
+      <div className="card">
+        <h1>Create your account</h1>
+        <p className="muted">Join FixTriage — find help nearby, or offer your skills.</p>
+        <input
+          className="input"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="input"
+          placeholder="Password (min 8 characters)"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button className="btn btn-primary" onClick={handleSubmit}>
+          Create account
+        </button>
+        {error && <p className="msg-error">{error}</p>}
+        <p className="muted" style={{ marginTop: 16 }}>
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
+      </div>
     </div>
   );
 }
