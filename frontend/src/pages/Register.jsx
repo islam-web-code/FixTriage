@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { hashPassword } from '../lib/hashPassword';
 
 function Register() {
   const [email, setEmail] = useState('');
@@ -10,11 +11,15 @@ function Register() {
 
   const handleSubmit = async () => {
     setError(null);
+        if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
     try {
       const res = await fetch('http://localhost:3000/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password: await hashPassword(password), name }),
       });
       const data = await res.json();
       if (!res.ok) {
