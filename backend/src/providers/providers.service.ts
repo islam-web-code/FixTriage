@@ -7,12 +7,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
+import { GeocodingService } from './geocoding.service';
 
 @Injectable()
 export class ProvidersService {
-  constructor(private prisma: PrismaService) {}
+    constructor(
+    private prisma: PrismaService,
+    private geocoding: GeocodingService,
+  ) {}
 
-  async createProfile(userId: number, dto: CreateProfileDto) {
+    async createProfile(userId: number, dto: CreateProfileDto) {
     const existing = await this.prisma.providerProfile.findUnique({
       where: { userId },
     });
@@ -20,8 +24,14 @@ export class ProvidersService {
       throw new ConflictException('Provider profile already exists');
     }
 
+    const coords = dto.address ? await this.geocoding.geocode(dto.address) : null;
+
     const profile = await this.prisma.providerProfile.create({
-      data: { userId, ...dto },
+      data: {
+        userId,
+        ...dto,
+        ...(coords ?? {}),
+      },
     });
 
     await this.prisma.user.update({
@@ -43,11 +53,18 @@ export class ProvidersService {
     return profile;
   }
 
-  async updateProfile(userId: number, dto: CreateProfileDto) {
-    await this.getMyProfile(userId);
+    async updateProfile(userId: number, dto: CreateProfileDto) {
+    const current = await this.getMyProfile(userId);
+
+    const addressChanged = dto.address && dto.address !== current.address;
+    const coords = addressChanged ? await this.geocoding.geocode(dto.address!) : null;
+
     return this.prisma.providerProfile.update({
       where: { userId },
-      data: dto,
+      data: {
+        ...dto,
+        ...(coords ?? {}),
+      },
     });
   }
 
