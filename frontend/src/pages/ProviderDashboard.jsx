@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AvailabilityEditor from '../components/AvailabilityEditor';
 
 const CATEGORIES = [
   'electrical',
@@ -15,6 +16,7 @@ const CATEGORIES = [
 function ProviderDashboard() {
   const [profile, setProfile] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
+  const [reviews, setReviews] = useState([]);
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -22,7 +24,8 @@ function ProviderDashboard() {
   const [svcCategory, setSvcCategory] = useState('electrical');
   const [svcDescription, setSvcDescription] = useState('');
   const [svcPrice, setSvcPrice] = useState('');
-  const [message, setMessage] = useState(null); // { text, ok }
+  const [message, setMessage] = useState(null);
+  const [editingSchedule, setEditingSchedule] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -52,13 +55,23 @@ function ProviderDashboard() {
       .catch(() => {});
   }, [token, navigate]);
 
+  const loadReviews = useCallback(() => {
+    fetch('http://localhost:3000/providers/me/reviews', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setReviews(Array.isArray(data) ? data : []))
+      .catch(() => setReviews([]));
+  }, [token]);
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
       return;
     }
     loadProfile();
-  }, [token, navigate, loadProfile]);
+    loadReviews();
+  }, [token, navigate, loadProfile, loadReviews]);
 
   const saveProfile = async () => {
     setMessage(null);
@@ -172,14 +185,38 @@ function ProviderDashboard() {
           )}
           {profile?.services?.map((s) => (
             <div className="card" key={s.id}>
-              <div>
-                <h3>{s.title}</h3>
-                <span className="badge">{s.category.replace('_', ' ')}</span>{' '}
-                {s.priceEstimate != null && <span className="price">₪{s.priceEstimate}</span>}
+              <div className="stack">
+                <div>
+                  <h3>{s.title}</h3>
+                  <span className="badge">{s.category.replace('_', ' ')}</span>{' '}
+                  {s.priceEstimate != null && <span className="price">₪{s.priceEstimate}</span>}
+                  <p className="muted" style={{ marginTop: 'var(--space-2)' }}>
+                    {s.slotMinutes ?? 60}-minute appointments
+                  </p>
+                </div>
+
+                <div className="cluster">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() =>
+                      setEditingSchedule(editingSchedule === s.id ? null : s.id)
+                    }
+                  >
+                    {editingSchedule === s.id ? 'Hide schedule' : 'Set schedule'}
+                  </button>
+                  <button className="btn btn-danger" onClick={() => deleteService(s.id)}>
+                    Delete
+                  </button>
+                </div>
+
+                {editingSchedule === s.id && (
+                  <AvailabilityEditor
+                    service={s}
+                    onClose={() => setEditingSchedule(null)}
+                    onSaved={loadProfile}
+                  />
+                )}
               </div>
-              <button className="btn btn-danger" onClick={() => deleteService(s.id)}>
-                Delete
-              </button>
             </div>
           ))}
 
@@ -223,6 +260,37 @@ function ProviderDashboard() {
               </div>
             </div>
           </div>
+
+          <h2>My reviews</h2>
+          {reviews.length === 0 && (
+            <p className="muted">
+              No reviews yet — they'll appear here after customers rate completed jobs.
+            </p>
+          )}
+          {reviews.length > 0 && (
+            <p className="muted">
+              Average rating:{' '}
+              <strong>
+                {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+              </strong>{' '}
+              from {reviews.length} review{reviews.length === 1 ? '' : 's'}
+            </p>
+          )}
+          {reviews.map((r) => (
+            <div className="card" key={r.id}>
+              <div className="stack">
+                <div>
+                  <h3>{r.user.name}</h3>
+                  {r.booking?.service && (
+                    <span className="badge">{r.booking.service.title}</span>
+                  )}
+                </div>
+                <span aria-label={`${r.rating} out of 5 stars`}>{'⭐'.repeat(r.rating)}</span>
+                {r.comment && <p className="muted">{r.comment}</p>}
+                <p className="muted">{new Date(r.createdAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+          ))}
         </>
       )}
 

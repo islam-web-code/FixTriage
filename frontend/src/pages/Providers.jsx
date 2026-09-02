@@ -29,7 +29,10 @@ function Providers() {
     const url = category
       ? `http://localhost:3000/providers?category=${category}`
       : 'http://localhost:3000/providers';
-    fetch(url)
+        const token = localStorage.getItem('token');
+    fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then((res) => res.json())
       .then((data) => setProviders(data))
       .catch(() => setProviders([]))

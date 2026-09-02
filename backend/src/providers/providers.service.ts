@@ -1,13 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { GeocodingService } from './geocoding.service';
+import { SetAvailabilityDto } from './dto/set-availability.dto';
 
 @Injectable()
 export class ProvidersService {
@@ -87,5 +90,79 @@ export class ProvidersService {
       throw new ForbiddenException('This service belongs to another provider');
     }
     return this.prisma.service.delete({ where: { id: serviceId } });
+  }
+
+    async setAvailability(userId: number, serviceId: number, dto: SetAvailabilityDto) {
+    const profile = await this.getMyProfile(userId);
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+    });
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+    if (service.providerId !== profile.id) {
+      throw new ForbiddenException('This service belongs to another provider');
+    }
+
+    for (const slot of dto.slots) {
+      if (slot.endHour <= slot.startHour) {
+        throw new BadRequestException(
+          `End hour must be after start hour (day ${slot.dayOfWeek})`,
+        );
+      }
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.availability.deleteMany({ where: { serviceId } }),
+      this.prisma.availability.createMany({
+        data: dto.slots.map((s) => ({ ...s, serviceId })),
+      }),
+    ]);
+
+    return this.prisma.availability.findMany({
+      where: { serviceId },
+      orderBy: { dayOfWeek: 'asc' },
+    });
+  }
+
+  async getAvailability(userId: number, serviceId: number) {
+    const profile = await this.getMyProfile(userId);
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+    });
+    if (!service || service.providerId !== profile.id) {
+      throw new NotFoundException('Service not found');
+    }
+    return this.prisma.availability.findMany({
+      where: { serviceId },
+      orderBy: { dayOfWeek: 'asc' },
+    });
+  }
+    async updateService(userId: number, serviceId: number, slotMinutes: number) {
+    const profile = await this.getMyProfile(userId);
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+    });
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+    if (service.providerId !== profile.id) {
+      throw new ForbiddenException('This service belongs to another provider');
+    }
+    return this.prisma.service.update({
+      where: { id: serviceId },
+      data: { slotMinutes },
+    });
+  }
+    async getMyReviews(userId: number) {
+    const profile = await this.getMyProfile(userId);
+    return this.prisma.review.findMany({
+      where: { providerId: profile.id },
+      include: {
+        user: { select: { name: true } },
+        booking: { select: { service: { select: { title: true, category: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }
