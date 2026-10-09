@@ -20,7 +20,7 @@ function AvailabilityEditor({ service, onClose, onSaved }) {
   const token = localStorage.getItem('token');
 
   const load = useCallback(() => {
-    fetch(`http://localhost:3000/providers/me/services/${service.id}/availability`, {
+    fetch(`${import.meta.env.VITE_API_URL}/providers/me/services/${service.id}/availability`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -60,7 +60,7 @@ function AvailabilityEditor({ service, onClose, onSaved }) {
 
     // 1. Save the slot gap on the service
     const gapRes = await fetch(
-      `http://localhost:3000/providers/me/services/${service.id}`,
+      `${import.meta.env.VITE_API_URL}/providers/me/services/${service.id}`,
       {
         method: 'PATCH',
         headers: {
@@ -88,7 +88,7 @@ function AvailabilityEditor({ service, onClose, onSaved }) {
       })),
     };
     const res = await fetch(
-      `http://localhost:3000/providers/me/services/${service.id}/availability`,
+      `${import.meta.env.VITE_API_URL}/providers/me/services/${service.id}/availability`,
       {
         method: 'PUT',
         headers: {

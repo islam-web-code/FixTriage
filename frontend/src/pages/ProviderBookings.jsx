@@ -19,7 +19,7 @@ function ProviderBookings() {
   const token = localStorage.getItem('token');
 
   const load = useCallback(() => {
-    fetch('http://localhost:3000/bookings/received', {
+    fetch(`${import.meta.env.VITE_API_URL}/bookings/received`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -44,7 +44,7 @@ function ProviderBookings() {
       return;
     }
     load();
-    fetch('http://localhost:3000/auth/me', {
+    fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -54,7 +54,7 @@ function ProviderBookings() {
 
   const changeStatus = async (id, status) => {
     setMessage(null);
-    const res = await fetch(`http://localhost:3000/bookings/${id}/status`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings/${id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

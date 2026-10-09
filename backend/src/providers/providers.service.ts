@@ -37,8 +37,9 @@ export class ProvidersService {
       },
     });
 
-    await this.prisma.user.update({
-      where: { id: userId },
+        // Only regular users get promoted — never demote an admin
+    await this.prisma.user.updateMany({
+      where: { id: userId, role: 'user' },
       data: { role: 'provider' },
     });
 

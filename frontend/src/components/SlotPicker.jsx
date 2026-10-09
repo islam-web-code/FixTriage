@@ -20,7 +20,7 @@ function SlotPicker({ service, onBook, busy }) {
     setLoading(true);
     setChosen(null);
     fetch(
-      `http://localhost:3000/providers/services/${service.id}/slots?date=${date}`,
+      `${import.meta.env.VITE_API_URL}/providers/services/${service.id}/slots?date=${date}`,
     )
       .then((res) => res.json())
       .then((data) => {

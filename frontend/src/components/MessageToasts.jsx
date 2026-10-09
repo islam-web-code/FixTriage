@@ -13,7 +13,7 @@ function MessageToasts({ openBookingId }) {
 
     const poll = () => {
       fetch(
-        `http://localhost:3000/bookings/messages/recent?since=${encodeURIComponent(
+        `${import.meta.env.VITE_API_URL}/bookings/messages/recent?since=${encodeURIComponent(
           lastCheck.current,
         )}`,
         { headers: { Authorization: `Bearer ${token}` } },

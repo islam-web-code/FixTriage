@@ -22,7 +22,7 @@ const [openChat, setOpenChat] = useState(null);
   const [me, setMe] = useState(null);
 
   const load = useCallback(() => {
-    fetch('http://localhost:3000/bookings/mine', {
+    fetch(`${import.meta.env.VITE_API_URL}/bookings/mine`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -43,7 +43,7 @@ const [openChat, setOpenChat] = useState(null);
       return;
     }
     load();
-    fetch('http://localhost:3000/auth/me', {
+    fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -53,7 +53,7 @@ const [openChat, setOpenChat] = useState(null);
 
   const submitReview = async (bookingId) => {
     setMessage(null);
-    const res = await fetch(`http://localhost:3000/bookings/${bookingId}/review`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings/${bookingId}/review`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

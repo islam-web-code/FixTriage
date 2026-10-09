@@ -13,7 +13,7 @@ function ProviderDetail() {
 
   useEffect(() => {
         const token = localStorage.getItem('token');
-    fetch(`http://localhost:3000/providers/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/providers/${id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((res) => {
@@ -32,7 +32,7 @@ function ProviderDetail() {
       return;
     }
     setBusy(true);
-    const res = await fetch('http://localhost:3000/bookings', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

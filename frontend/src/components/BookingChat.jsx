@@ -11,7 +11,7 @@ function BookingChat({ bookingId, myUserId }) {
 
   const load = useCallback(
     (scroll = false) => {
-      fetch(`http://localhost:3000/bookings/${bookingId}/messages`, {
+      fetch(`${import.meta.env.VITE_API_URL}/bookings/${bookingId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(async (res) => {
@@ -45,7 +45,7 @@ function BookingChat({ bookingId, myUserId }) {
 
   const send = async () => {
     if (!text.trim()) return;
-    const res = await fetch(`http://localhost:3000/bookings/${bookingId}/messages`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings/${bookingId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

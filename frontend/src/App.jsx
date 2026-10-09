@@ -16,6 +16,7 @@ import ProviderDetail from './pages/ProviderDetail';
 import ProviderDashboard from './pages/ProviderDashboard';
 import MyBookings from './pages/MyBookings';
 import ProviderBookings from './pages/ProviderBookings';
+import AdminDashboard from './pages/AdminDashboard';
 import MessageToasts from './components/MessageToasts';
 import AccountMenu from './components/AccountMenu';
 
@@ -30,7 +31,7 @@ function NavBar({ theme, setTheme }) {
       setUser(null);
       return;
     }
-    fetch('http://localhost:3000/auth/me', {
+    fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -99,6 +100,7 @@ function App() {
         <Route path="/dashboard" element={<ProviderDashboard />} />
         <Route path="/dashboard/bookings" element={<ProviderBookings />} />
         <Route path="/bookings" element={<MyBookings />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
       <MessageToasts />
     </BrowserRouter>

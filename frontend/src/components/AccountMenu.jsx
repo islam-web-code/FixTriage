@@ -11,7 +11,6 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
-  // Close when clicking outside
   useEffect(() => {
     const onClick = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -26,6 +25,12 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
 
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
   const isProvider = user?.role === 'provider';
+  const isAdmin = user?.role === 'admin';
+
+  const go = (path) => {
+    setOpen(false);
+    navigate(path);
+  };
 
   const submitPassword = async () => {
     setMessage(null);
@@ -34,7 +39,7 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
       return;
     }
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:3000/auth/password', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/password`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -77,15 +82,15 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
             <span className="badge">{user?.role}</span>
           </div>
 
-          <button
-            className="account-item"
-            onClick={() => {
-              setOpen(false);
-              navigate('/dashboard');
-            }}
-          >
-            🧰 {isProvider ? 'Provider dashboard' : 'Become a provider'}
-          </button>
+          {isAdmin ? (
+            <button className="account-item" onClick={() => go('/admin')}>
+              🛡️ Admin dashboard
+            </button>
+          ) : (
+            <button className="account-item" onClick={() => go('/dashboard')}>
+              🧰 {isProvider ? 'Provider dashboard' : 'Become a provider'}
+            </button>
+          )}
 
           <button
             className="account-item"
@@ -120,7 +125,10 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
           )}
 
           {message && (
-            <p className={message.ok ? 'msg-ok' : 'msg-error'} style={{ padding: '0 var(--space-3)' }}>
+            <p
+              className={message.ok ? 'msg-ok' : 'msg-error'}
+              style={{ padding: '0 var(--space-3)' }}
+            >
               {message.ok ? '✅' : '⚠️'} {message.text}
             </p>
           )}

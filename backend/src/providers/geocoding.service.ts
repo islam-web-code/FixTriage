@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SetAvailabilityDto } from './dto/set-availability.dto';
 
 type GeocodeResult = { latitude: number; longitude: number } | null;
 

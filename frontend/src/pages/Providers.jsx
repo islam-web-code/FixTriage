@@ -27,8 +27,8 @@ function Providers() {
     setLoading(true);
     setSelected(null);
     const url = category
-      ? `http://localhost:3000/providers?category=${category}`
-      : 'http://localhost:3000/providers';
+      ? `${import.meta.env.VITE_API_URL}/providers?category=${category}`
+      : `${import.meta.env.VITE_API_URL}/providers`;
         const token = localStorage.getItem('token');
     fetch(url, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},

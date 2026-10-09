@@ -30,7 +30,7 @@ function ProviderDashboard() {
   const token = localStorage.getItem('token');
 
   const loadProfile = useCallback(() => {
-    fetch('http://localhost:3000/providers/me/profile', {
+    fetch(`${import.meta.env.VITE_API_URL}/providers/me/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -56,7 +56,7 @@ function ProviderDashboard() {
   }, [token, navigate]);
 
   const loadReviews = useCallback(() => {
-    fetch('http://localhost:3000/providers/me/reviews', {
+    fetch(`${import.meta.env.VITE_API_URL}/providers/me/reviews`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : []))
@@ -76,7 +76,7 @@ function ProviderDashboard() {
   const saveProfile = async () => {
     setMessage(null);
     const method = hasProfile ? 'PUT' : 'POST';
-    const res = await fetch('http://localhost:3000/providers/me/profile', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/providers/me/profile`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ function ProviderDashboard() {
       description: svcDescription || undefined,
       priceEstimate: svcPrice ? Number(svcPrice) : undefined,
     };
-    const res = await fetch('http://localhost:3000/providers/me/services', {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/providers/me/services`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ function ProviderDashboard() {
   };
 
   const deleteService = async (id) => {
-    await fetch(`http://localhost:3000/providers/me/services/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/providers/me/services/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -282,7 +282,7 @@ function ProviderDashboard() {
                 <div>
                   <h3>{r.user.name}</h3>
                   {r.booking?.service && (
-                    <span className="badge">{r.booking.service.title}</span>
+                    <span className="badge">{r.booking.service.category.replace('_', ' ')}</span>
                   )}
                 </div>
                 <span aria-label={`${r.rating} out of 5 stars`}>{'⭐'.repeat(r.rating)}</span>
