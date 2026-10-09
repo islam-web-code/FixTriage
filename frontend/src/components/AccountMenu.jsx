@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hashPassword } from '../lib/hashPassword';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 function AccountMenu({ user, theme, setTheme, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -8,6 +9,7 @@ function AccountMenu({ user, theme, setTheme, onLogout }) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const menuRef = useRef(null);
   const navigate = useNavigate();
 

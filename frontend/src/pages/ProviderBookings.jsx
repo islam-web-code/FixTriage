@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookingChat from '../components/BookingChat';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 const STATUS_LABEL = {
   pending: '⏳ Awaiting your response',
@@ -13,6 +14,7 @@ function ProviderBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const [openChat, setOpenChat] = useState(null);
   const [me, setMe] = useState(null);
   const navigate = useNavigate();

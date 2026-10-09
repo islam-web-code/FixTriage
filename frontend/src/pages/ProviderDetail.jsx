@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import SlotPicker from '../components/SlotPicker';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 function ProviderDetail() {
   const { id } = useParams();
@@ -8,6 +9,7 @@ function ProviderDetail() {
   const [error, setError] = useState(null);
   const [openService, setOpenService] = useState(null);
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
