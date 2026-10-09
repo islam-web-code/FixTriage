@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AvailabilityEditor from '../components/AvailabilityEditor';
 import useAutoDismiss from '../lib/useAutoDismiss';
 
@@ -18,6 +18,7 @@ function ProviderDashboard() {
   const [profile, setProfile] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [role, setRole] = useState(null);
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -86,6 +87,12 @@ function ProviderDashboard() {
     }
     loadProfile();
     loadReviews();
+    fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setRole(data?.role ?? null))
+      .catch(() => {});
   }, [token, navigate, loadProfile, loadReviews]);
 
   const saveProfile = async () => {
@@ -173,6 +180,20 @@ function ProviderDashboard() {
     loadProfile();
     loadReviews();
   };
+
+  if (role === 'admin') {
+    return (
+      <div className="page page-narrow">
+        <div className="card">
+          <div className="stack">
+            <h2>Admins can't have a provider profile</h2>
+            <p className="muted">Admin accounts moderate the platform and can't offer services.</p>
+            <div><Link to="/admin" className="btn btn-primary">Open admin dashboard</Link></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={hasProfile ? 'page page-wide' : 'page'}>
