@@ -31,29 +31,31 @@ function Login() {
   return (
     <div className="page page-narrow">
       <div className="card">
-        <h1>Welcome back</h1>
-        <p className="muted">Log in to book services or manage your provider profile.</p>
-        <input
-          className="input"
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="input"
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="btn btn-primary" onClick={handleSubmit}>
-          Log in
-        </button>
-        {error && <p className="msg-error">{error}</p>}
-        <p className="muted" style={{ marginTop: 16 }}>
-          No account? <Link to="/register">Create one</Link>
-        </p>
+        <div className="stack">
+          <h1>Welcome back</h1>
+          <p className="muted">Log in to book services or manage your provider profile.</p>
+          <input
+            className="input"
+            placeholder="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="btn btn-primary" onClick={handleSubmit} style={{ inlineSize: '100%' }}>
+            Log in
+          </button>
+          {error && <p className="msg-error">{error}</p>}
+          <p className="muted">
+            No account? <Link to="/register">Create one</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
