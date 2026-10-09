@@ -20,6 +20,14 @@ export class ProvidersService {
   ) {}
 
     async createProfile(userId: number, dto: CreateProfileDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role === 'admin') {
+      throw new ForbiddenException('Admin accounts cannot become providers');
+    }
+
     const existing = await this.prisma.providerProfile.findUnique({
       where: { userId },
     });

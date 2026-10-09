@@ -25,11 +25,6 @@ function Home() {
       });
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
   if (!user) return <p className="muted" style={{ textAlign: 'center', marginTop: 60 }}>Loading...</p>;
 
   return (
@@ -54,17 +49,28 @@ function Home() {
 
       <div className="card">
         <div className="stack">
-          <h2>Offer your skills</h2>
-          <p className="muted">Create a provider profile and list the services you offer.</p>
+          <h2>
+            {user.role === 'admin'
+              ? 'Admin dashboard'
+              : user.role === 'provider'
+                ? 'Your provider dashboard'
+                : 'Offer your skills'}
+          </h2>
+          <p className="muted">
+            {user.role === 'admin'
+              ? 'Moderate users, services, and reviews across FixTriage.'
+              : user.role === 'provider'
+                ? 'Manage your profile, services, schedule, and reviews.'
+                : 'Create a provider profile and list the services you offer.'}
+          </p>
           <div>
-            <Link to="/dashboard" className="btn btn-primary">Go to dashboard</Link>
+            <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} className="btn btn-primary">
+              {user.role === 'admin' ? 'Open admin dashboard' : 'Go to dashboard'}
+            </Link>
           </div>
         </div>
       </div>
 
-      <button className="btn btn-danger" onClick={handleLogout} style={{ marginTop: 10 }}>
-        Log out
-      </button>
     </div>
   );
 }
