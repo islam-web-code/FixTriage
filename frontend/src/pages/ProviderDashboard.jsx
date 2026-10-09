@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AvailabilityEditor from '../components/AvailabilityEditor';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 const CATEGORIES = [
   'electrical',
@@ -25,9 +26,23 @@ function ProviderDashboard() {
   const [svcDescription, setSvcDescription] = useState('');
   const [svcPrice, setSvcPrice] = useState('');
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedSection = searchParams.get('section');
+  const activeSection = ['profile', 'services', 'add', 'reviews'].includes(requestedSection)
+    ? requestedSection
+    : 'profile';
   const token = localStorage.getItem('token');
+
+  const setSection = (section) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.set('section', section);
+      return nextParams;
+    });
+  };
 
   const loadProfile = useCallback(() => {
     fetch(`${import.meta.env.VITE_API_URL}/providers/me/profile`, {
@@ -128,177 +143,243 @@ function ProviderDashboard() {
     setSvcPrice('');
     setMessage({ text: 'Service added', ok: true });
     loadProfile();
+    setSection('services');
   };
 
   const deleteService = async (id) => {
-    await fetch(`${import.meta.env.VITE_API_URL}/providers/me/services/${id}`, {
+    if (!window.confirm(
+      "Delete this service?\n\nIts bookings (including upcoming ones), messages and reviews will be removed too. This cannot be undone.",
+    )) {
+      return;
+    }
+    setMessage(null);
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/providers/me/services/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setMessage({
+        ok: false,
+        text: Array.isArray(data?.message)
+          ? data.message.join(', ')
+          : typeof data?.message === 'string'
+            ? data.message
+            : 'Could not delete the service',
+      });
+      return;
+    }
     setMessage({ text: 'Service removed', ok: true });
     loadProfile();
+    loadReviews();
   };
 
   return (
-    <div className="page">
+    <div className={hasProfile ? 'page page-wide' : 'page'}>
       <h1>Provider dashboard</h1>
 
-      <div className="card">
-        <div className="stack">
-          <h2>{hasProfile ? 'My profile' : 'Become a provider'}</h2>
-          {!hasProfile && (
-            <p className="muted">
-              Fill in your details and you can start listing services right away.
+      <div className={hasProfile ? 'dashboard-layout' : 'stack'}>
+        {hasProfile && (
+          <nav className="dashboard-sidebar" aria-label="Dashboard sections">
+            {[
+              { id: 'profile', label: 'Profile' },
+              { id: 'services', label: 'My services', count: profile?.services?.length ?? 0 },
+              { id: 'add', label: 'Add a service' },
+              { id: 'reviews', label: 'Reviews', count: reviews.length },
+            ].map(({ id, label, count }) => (
+              <button
+                key={id}
+                type="button"
+                className="dashboard-section-button"
+                aria-current={activeSection === id ? 'page' : undefined}
+                onClick={() => {
+                  setMessage(null);
+                  setSection(id);
+                }}
+              >
+                {label}
+                {count != null && <span className="badge">{count}</span>}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        <div className="dashboard-content stack">
+          {message && (
+            <p className={message.ok ? 'msg-ok' : 'msg-error'}>
+              {message.ok ? '✅' : '⚠️'} {message.text}
             </p>
           )}
-          <textarea
-            className="input"
-            placeholder="Bio — tell people what you do"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-          />
-          <input
-            className="input"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <input
-            className="input"
-            placeholder="Address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-          <div>
-            <button className="btn btn-primary" onClick={saveProfile}>
-              {hasProfile ? 'Save changes' : 'Create provider profile'}
-            </button>
-          </div>
+
+          {(!hasProfile || activeSection === 'profile') && (
+            <div className="card">
+              <div className="stack">
+                <h2>{hasProfile ? 'My profile' : 'Become a provider'}</h2>
+                {!hasProfile && (
+                  <p className="muted">
+                    Fill in your details and you can start listing services right away.
+                  </p>
+                )}
+                <textarea
+                  className="input"
+                  placeholder="Bio — tell people what you do"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                />
+                <input
+                  className="input"
+                  placeholder="Phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <input
+                  className="input"
+                  placeholder="Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+                <div>
+                  <button className="btn btn-primary" onClick={saveProfile}>
+                    {hasProfile ? 'Save changes' : 'Create provider profile'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasProfile && activeSection === 'services' && (
+            <section className="stack">
+              <h2>My services</h2>
+              {profile?.services?.length === 0 && (
+                                <p className="muted">
+                  Nothing listed yet —{' '}
+                  <button type="button" className="btn btn-danger" style={{ color: 'var(--primary)', padding: 0 }} onClick={() => {
+                    setMessage(null);
+                    setSection('add');
+                  }}>
+                    add your first service
+                  </button>
+                  .
+                </p>
+              )}
+              {profile?.services?.map((s) => (
+                <div className="card" key={s.id}>
+                  <div className="stack">
+                    <div>
+                      <h3>{s.title}</h3>
+                      <span className="badge">{s.category.replace('_', ' ')}</span>{' '}
+                      {s.priceEstimate != null && <span className="price">₪{s.priceEstimate}</span>}
+                      <p className="muted" style={{ marginTop: 'var(--space-2)' }}>
+                        {s.slotMinutes ?? 60}-minute appointments
+                      </p>
+                    </div>
+
+                    <div className="cluster">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() =>
+                          setEditingSchedule(editingSchedule === s.id ? null : s.id)
+                        }
+                      >
+                        {editingSchedule === s.id ? 'Hide schedule' : 'Set schedule'}
+                      </button>
+                      <button className="btn btn-danger" onClick={() => deleteService(s.id)}>
+                        Delete
+                      </button>
+                    </div>
+
+                    {editingSchedule === s.id && (
+                      <AvailabilityEditor
+                        service={s}
+                        onClose={() => setEditingSchedule(null)}
+                        onSaved={loadProfile}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {hasProfile && activeSection === 'add' && (
+            <div className="card">
+              <div className="stack">
+                <h2>Add a service</h2>
+                <select
+                  className="input"
+                  value={svcCategory}
+                  onChange={(e) => setSvcCategory(e.target.value)}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="input"
+                  placeholder="Title"
+                  value={svcTitle}
+                  onChange={(e) => setSvcTitle(e.target.value)}
+                />
+                <textarea
+                  className="input"
+                  placeholder="Description (optional)"
+                  value={svcDescription}
+                  onChange={(e) => setSvcDescription(e.target.value)}
+                />
+                <input
+                  className="input"
+                  placeholder="Price estimate (optional)"
+                  type="number"
+                  value={svcPrice}
+                  onChange={(e) => setSvcPrice(e.target.value)}
+                />
+                <div>
+                  <button className="btn btn-primary" onClick={addService}>
+                    Add service
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasProfile && activeSection === 'reviews' && (
+            <section className="stack">
+              <h2>My reviews</h2>
+              {reviews.length === 0 && (
+                <p className="muted">
+                  No reviews yet — they'll appear here after customers rate completed jobs.
+                </p>
+              )}
+              {reviews.length > 0 && (
+                <p className="muted">
+                  Average rating:{' '}
+                  <strong>
+                    {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                  </strong>{' '}
+                  from {reviews.length} review{reviews.length === 1 ? '' : 's'}
+                </p>
+              )}
+              {reviews.map((r) => (
+                <div className="card" key={r.id}>
+                  <div className="stack">
+                    <div>
+                      <h3>{r.user.name}</h3>
+                      {r.booking?.service && (
+                        <span className="badge">{r.booking.service.category.replace('_', ' ')}</span>
+                      )}
+                    </div>
+                    <span aria-label={`${r.rating} out of 5 stars`}>{'⭐'.repeat(r.rating)}</span>
+                    {r.comment && <p className="muted">{r.comment}</p>}
+                    <p className="muted">{new Date(r.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
         </div>
       </div>
-
-      {hasProfile && (
-        <>
-          <h2>My services</h2>
-          {profile?.services?.length === 0 && (
-            <p className="muted">Nothing listed yet — add your first service below.</p>
-          )}
-          {profile?.services?.map((s) => (
-            <div className="card" key={s.id}>
-              <div className="stack">
-                <div>
-                  <h3>{s.title}</h3>
-                  <span className="badge">{s.category.replace('_', ' ')}</span>{' '}
-                  {s.priceEstimate != null && <span className="price">₪{s.priceEstimate}</span>}
-                  <p className="muted" style={{ marginTop: 'var(--space-2)' }}>
-                    {s.slotMinutes ?? 60}-minute appointments
-                  </p>
-                </div>
-
-                <div className="cluster">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() =>
-                      setEditingSchedule(editingSchedule === s.id ? null : s.id)
-                    }
-                  >
-                    {editingSchedule === s.id ? 'Hide schedule' : 'Set schedule'}
-                  </button>
-                  <button className="btn btn-danger" onClick={() => deleteService(s.id)}>
-                    Delete
-                  </button>
-                </div>
-
-                {editingSchedule === s.id && (
-                  <AvailabilityEditor
-                    service={s}
-                    onClose={() => setEditingSchedule(null)}
-                    onSaved={loadProfile}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-
-          <div className="card">
-            <div className="stack">
-              <h2>Add a service</h2>
-              <select
-                className="input"
-                value={svcCategory}
-                onChange={(e) => setSvcCategory(e.target.value)}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="input"
-                placeholder="Title"
-                value={svcTitle}
-                onChange={(e) => setSvcTitle(e.target.value)}
-              />
-              <textarea
-                className="input"
-                placeholder="Description (optional)"
-                value={svcDescription}
-                onChange={(e) => setSvcDescription(e.target.value)}
-              />
-              <input
-                className="input"
-                placeholder="Price estimate (optional)"
-                type="number"
-                value={svcPrice}
-                onChange={(e) => setSvcPrice(e.target.value)}
-              />
-              <div>
-                <button className="btn btn-primary" onClick={addService}>
-                  Add service
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <h2>My reviews</h2>
-          {reviews.length === 0 && (
-            <p className="muted">
-              No reviews yet — they'll appear here after customers rate completed jobs.
-            </p>
-          )}
-          {reviews.length > 0 && (
-            <p className="muted">
-              Average rating:{' '}
-              <strong>
-                {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-              </strong>{' '}
-              from {reviews.length} review{reviews.length === 1 ? '' : 's'}
-            </p>
-          )}
-          {reviews.map((r) => (
-            <div className="card" key={r.id}>
-              <div className="stack">
-                <div>
-                  <h3>{r.user.name}</h3>
-                  {r.booking?.service && (
-                    <span className="badge">{r.booking.service.category.replace('_', ' ')}</span>
-                  )}
-                </div>
-                <span aria-label={`${r.rating} out of 5 stars`}>{'⭐'.repeat(r.rating)}</span>
-                {r.comment && <p className="muted">{r.comment}</p>}
-                <p className="muted">{new Date(r.createdAt).toLocaleDateString()}</p>
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      {message && (
-        <p className={message.ok ? 'msg-ok' : 'msg-error'}>
-          {message.ok ? '✅' : '⚠️'} {message.text}
-        </p>
-      )}
     </div>
   );
 }

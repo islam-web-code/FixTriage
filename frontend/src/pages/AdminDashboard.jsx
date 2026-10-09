@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 const API = import.meta.env.VITE_API_URL;
 const TABS = ['users', 'services', 'reviews'];
@@ -11,6 +12,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 

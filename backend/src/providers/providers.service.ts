@@ -90,7 +90,20 @@ export class ProvidersService {
     if (service.providerId !== profile.id) {
       throw new ForbiddenException('This service belongs to another provider');
     }
-    return this.prisma.service.delete({ where: { id: serviceId } });
+    const bookings = await this.prisma.booking.findMany({
+      where: { serviceId },
+      select: { id: true },
+    });
+    const bookingIds = bookings.map((b) => b.id);
+
+    await this.prisma.$transaction([
+      this.prisma.message.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+      this.prisma.review.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+      this.prisma.booking.deleteMany({ where: { id: { in: bookingIds } } }),
+      this.prisma.service.delete({ where: { id: serviceId } }),
+    ]);
+
+    return { deleted: true };
   }
 
     async setAvailability(userId: number, serviceId: number, dto: SetAvailabilityDto) {

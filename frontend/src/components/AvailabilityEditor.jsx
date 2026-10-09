@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import useAutoDismiss from '../lib/useAutoDismiss';
 
 const DAYS = [
   { value: 0, label: 'Sunday' },
@@ -16,6 +17,7 @@ function AvailabilityEditor({ service, onClose, onSaved }) {
   const [slots, setSlots] = useState({});
   const [slotMinutes, setSlotMinutes] = useState(service.slotMinutes ?? 60);
   const [message, setMessage] = useState(null);
+  useAutoDismiss(message, setMessage);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem('token');
 
